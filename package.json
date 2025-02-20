@@ -58,6 +58,7 @@
     "@adonisjs/lucid": "^21.6.0",
     "@vinejs/vine": "^3.0.0",
     "luxon": "^3.5.0",
+    "MeteoLog": "file:",
     "mqtt": "^5.10.3",
     "node-cron": "^3.0.3",
     "pg": "^8.13.1",
