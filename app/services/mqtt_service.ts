@@ -12,28 +12,30 @@ class MqttService {
   }
 
   private setupListeners() {
-    this.client.on('connect', () => {
-      console.log('MQTT conectado!')
-      this.client.subscribe(this.topic, (err) => {
-        if (err) console.error(`Erro ao inscrever-se no tópico ${this.topic}:`, err)
-      })
-    })
-
     this.client.on('message', async (topic, message) => {
       if (topic !== this.topic) return // Ignorar mensagens de outros tópicos
 
       try {
         const data = JSON.parse(message.toString())
 
+        if (
+          typeof data.temperature !== 'number' ||
+          typeof data.humidity !== 'number' ||
+          typeof data.pressure !== 'number'
+        ) {
+          console.error('Dados MQTT inválidos recebidos:', data)
+          return
+        }
+
         const weatherData = new WeatherDatum()
         weatherData.recordedAt = DateTime.local()
         weatherData.temperature = data.temperature
         weatherData.humidity = data.humidity
         weatherData.pressure = data.pressure
-        weatherData.windSpeed = data.wind_speed
-        weatherData.windDirection = data.wind_direction
-        weatherData.rainfall = data.rainfall
-        weatherData.rained = data.rainfall > 0
+        weatherData.windSpeed = data.wind_speed || 0
+        weatherData.windDirection = data.wind_direction || 'N/A'
+        weatherData.rainfall = data.rainfall || 0
+        weatherData.rained = (data.rainfall || 0) > 0
 
         await weatherData.save()
         console.log('Dados do clima salvos com sucesso!')

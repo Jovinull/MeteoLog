@@ -8,3 +8,10 @@ router.get('/weather', async () => {
 router.get('/weather/latest', async () => {
   return await WeatherDatum.query().orderBy('recorded_at', 'desc').first()
 })
+
+router.get('/weather/history', async ({ request }) => {
+  const { start, end } = request.qs()
+  return await WeatherDatum.query()
+    .whereBetween('recorded_at', [start, end])
+    .orderBy('recorded_at', 'asc')
+})
