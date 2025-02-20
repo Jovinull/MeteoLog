@@ -1,10 +1,11 @@
 import mqtt from 'mqtt'
 import WeatherDatum from '#models/weather_datum'
 import { DateTime } from 'luxon'
+import logService from '#services/log_service'
 
 class MqttService {
   private client
-  private topic = 'weather/station/data' // Defina o tópico corretamente
+  private topic = 'weather/station/data'
 
   constructor() {
     this.client = mqtt.connect('mqtt://SEU_BROKER_URL')
@@ -12,8 +13,15 @@ class MqttService {
   }
 
   private setupListeners() {
+    this.client.on('connect', () => {
+      logService.info('MQTT conectado com sucesso!')
+      this.client.subscribe(this.topic, (err) => {
+        if (err) logService.error(`Erro ao inscrever-se no tópico ${this.topic}: ${err.message}`)
+      })
+    })
+
     this.client.on('message', async (topic, message) => {
-      if (topic !== this.topic) return // Ignorar mensagens de outros tópicos
+      if (topic !== this.topic) return
 
       try {
         const data = JSON.parse(message.toString())
@@ -23,7 +31,7 @@ class MqttService {
           typeof data.humidity !== 'number' ||
           typeof data.pressure !== 'number'
         ) {
-          console.error('Dados MQTT inválidos recebidos:', data)
+          logService.warning(`Dados MQTT inválidos recebidos: ${JSON.stringify(data)}`)
           return
         }
 
@@ -38,9 +46,9 @@ class MqttService {
         weatherData.rained = (data.rainfall || 0) > 0
 
         await weatherData.save()
-        console.log('Dados do clima salvos com sucesso!')
+        logService.info('Dados do clima salvos com sucesso!')
       } catch (error) {
-        console.error('Erro ao processar mensagem MQTT:', error)
+        logService.error(`Erro ao processar mensagem MQTT: ${error}`)
       }
     })
   }

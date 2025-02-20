@@ -12,6 +12,7 @@ import router from '@adonisjs/core/services/router'
 import server from '@adonisjs/core/services/server'
 import { schedule } from 'node-cron'
 import mqtt_service from '#services/mqtt_service'
+import logService from '#services/log_service'
 
 /**
  * The error handler is used to convert an exception
@@ -53,4 +54,14 @@ schedule('0 7 * * *', () => {
 schedule('0 19 * * *', () => {
   console.log('Executando consumo MQTT às 19:00...')
   mqtt_service.consumeData()
+})
+
+/**
+ * Schedule task to clean logs older than 24 hours.
+ * This job runs daily at midnight (00:00) to ensure
+ * that the system retains only the most recent logs.
+ */
+
+schedule('0 0 * * *', () => {
+  logService.cleanOldLogs()
 })
